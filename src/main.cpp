@@ -8,6 +8,8 @@ TimeCtrl timectrl;
 Display display;
 Button mode_button(12);
 Button set_button(11);
+Button left_button(10);
+Button right_button(9);
 
 void draw_if_outdated();
 // Handle overflow
@@ -25,17 +27,15 @@ void setup() {
 
   mode_button.init();
   set_button.init();
+  left_button.init();
+  right_button.init();
 }
 
 void loop() {
   static uint32_t count = 0;
   draw_if_outdated();
-  if (mode_button.pressed()) {
-    count += 1;
-    Serial.print("count = ");
-    Serial.println(count);
-  }
-  if (set_button.pressed()) {
+  if (mode_button.pressed() || set_button.pressed() || left_button.pressed() ||
+      right_button.pressed()) {
     count += 1;
     Serial.print("count = ");
     Serial.println(count);
