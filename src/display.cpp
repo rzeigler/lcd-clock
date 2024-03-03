@@ -35,7 +35,7 @@ void formatTimeInto(String &destination, const Time &time) {
 }
 
 void formatCellInto(String &destination, uint8_t num, char pad) {
-  if (num < 0) {
+  if (num < 10) {
     destination += pad;
   }
   destination += String(num, DEC);

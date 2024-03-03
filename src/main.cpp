@@ -1,25 +1,22 @@
 #include <Arduino.h>
+#include <button.hpp>
 #include <clock.hpp>
 #include <display.hpp>
+#include <util.hpp>
 
 TimeCtrl timectrl;
 Display display;
+Button mode_button(12);
 
 void draw_if_outdated();
 // Handle overflow
-inline uint32_t diff_millis(uint32_t before, uint32_t after) {
-  if (after < before) {
-    return UINT32_MAX - before + after;
-  } else {
-    return after - before;
-  }
-}
 
 void setup() {
   Wire.begin();
 
   timectrl.init();
   display.init();
+  mode_button.init();
 
   Serial.begin(9600);
   while (!Serial) {
@@ -35,8 +32,11 @@ void draw_if_outdated() {
 
   if (diff > 200) {
     last_draw = now;
-
     timectrl.read_current();
     display.draw(timectrl.current_time());
+  }
+
+  if (mode_button.pressed()) {
+    Serial.println("pressed");
   }
 }
