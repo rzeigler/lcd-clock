@@ -3,11 +3,12 @@
 #include <util.hpp>
 
 Button::Button(uint8_t pin, uint8_t debounce_ms)
-    : m_pin(pin), m_debounce_ms(debounce_ms) {}
+    // Assume the buttons all start unpressed
+    : m_pin(pin), m_debounce_ms(debounce_ms), m_state(State::Up),
+      m_last_read(State::Up) {}
 
 void Button::init() {
   pinMode(m_pin, INPUT_PULLUP);
-  m_last_read = State::Up;
   m_last_read_ms = millis();
 }
 
@@ -17,7 +18,7 @@ bool Button::pressed() {
    * Handles debounce internally
    */
   uint32_t current_ms = millis();
-  State current_read = static_cast<Button::State>(digitalRead(m_pin));
+  State current_read = pin_state();
 
   // State change, reset the debounce timer
   if (current_read != m_last_read) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Arduino.h>
 #include <stdint.h>
 
 class Button {
@@ -13,6 +14,10 @@ public:
   bool pressed();
 
 private:
+  inline State pin_state() const {
+    return static_cast<Button::State>(digitalRead(m_pin));
+  }
+
   uint8_t m_pin;
   uint8_t m_debounce_ms;
 
