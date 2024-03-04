@@ -1,8 +1,5 @@
 #include <display.hpp>
 
-static void formatTimeInto(String &destination, const Time &time);
-static void formatCellInto(String &destination, uint8_t num, char pad);
-
 Display::Display() : m_lcd(0x27, 16, 2) {}
 
 void Display::init() {
@@ -12,31 +9,14 @@ void Display::init() {
   m_lcd.backlight();
 }
 
-void Display::draw(const Time &time) {
-  static String time_repr;
+void Display::draw(const Grid &grid) {
+  m_lcd.home();
 
-  formatTimeInto(time_repr, time);
-  // Assume that time_repr is 10 chars because (##:##:##(A|P)M)
-  // We are on a 16x2 grid so start for even padding
-  m_lcd.setCursor(3, 0);
-  m_lcd.print(time_repr);
-}
-
-void formatTimeInto(String &destination, const Time &time) {
-  destination = "";
-
-  uint8_t hour = time.hour == 0 ? 12 : time.hour;
-  formatCellInto(destination, hour, ' ');
-  destination += ":";
-  formatCellInto(destination, time.minute, '0');
-  destination += ":";
-  formatCellInto(destination, time.second, '0');
-  destination += time.is_pm ? "PM" : "AM";
-}
-
-void formatCellInto(String &destination, uint8_t num, char pad) {
-  if (num < 10) {
-    destination += pad;
+  for (int row = 0; row < grid.len(); ++row) {
+    m_lcd.setCursor(0, row);
+    auto line = grid[row];
+    for (int col = 0; col < line.len(); ++col) {
+      m_lcd.print(line[col]);
+    }
   }
-  destination += String(num, DEC);
 }

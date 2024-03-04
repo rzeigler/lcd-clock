@@ -9,15 +9,13 @@ struct Time {
   uint8_t hour;
   uint8_t minute;
   uint8_t second;
-  bool is_hour12 = true;
+  bool is_hour12;
   bool is_pm;
-
-  void formatInto(String &result) const;
 };
 
-class TimeCtrl {
+class TimeModel {
 public:
-  TimeCtrl() {}
+  TimeModel() {}
 
   void init();
 

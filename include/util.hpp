@@ -8,3 +8,10 @@ inline uint32_t diff_millis(uint32_t before, uint32_t after) {
     return after - before;
   }
 }
+
+inline void panic(String msg) {
+  while (true) {
+    delay(1000);
+    Serial.println(msg);
+  }
+}
