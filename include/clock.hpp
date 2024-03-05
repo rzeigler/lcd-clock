@@ -2,7 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <DS3231.h>
+#include <DS3231-RTC.h>
 
 // Holder of a Time plus extra flags used for
 struct Time {
@@ -13,9 +13,9 @@ struct Time {
   bool is_pm;
 };
 
-class TimeModel {
+class ClockModel {
 public:
-  TimeModel() {}
+  ClockModel() {}
 
   void init();
 

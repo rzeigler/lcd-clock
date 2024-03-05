@@ -4,7 +4,7 @@
 #include <display.hpp>
 #include <util.hpp>
 
-TimeModel timectrl;
+ClockModel timectrl;
 Display display;
 Button mode_button(12);
 Button set_button(11);
