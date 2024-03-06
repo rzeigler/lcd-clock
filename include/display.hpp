@@ -26,6 +26,8 @@ public:
     m_col = 0;
   }
 
+  inline void set_row(int row) { m_row = row; }
+
   inline void put(char c) {
     m_grid[m_row][m_col] = c;
     m_col++;

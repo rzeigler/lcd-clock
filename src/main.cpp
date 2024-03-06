@@ -10,7 +10,7 @@ Display display;
 Keypad keypad(12, 11, 10, 9);
 
 Controller controller(clock_, display, keypad, fps_to_interval(15),
-                      fps_to_interval(10), 30000);
+                      fps_to_interval(10));
 
 void setup() {
 
