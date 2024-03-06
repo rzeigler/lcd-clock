@@ -51,3 +51,15 @@ bool Button::pressed() {
     return false;
   }
 }
+
+Keypad::Keypad(uint8_t mode_pin, uint8_t set_pin, uint8_t down_pin,
+               uint8_t up_pin)
+    : mode_button(mode_pin), set_button(set_pin), down_button(down_pin),
+      up_button(up_pin) {}
+
+void Keypad::Keypad::init() {
+  mode_button.init();
+  set_button.init();
+  down_button.init();
+  up_button.init();
+}

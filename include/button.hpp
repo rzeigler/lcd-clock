@@ -26,3 +26,21 @@ private:
   State m_last_read;
   uint32_t m_last_read_ms;
 };
+
+class Keypad {
+
+public:
+  Keypad(uint8_t mode_pin, uint8_t set_pin, uint8_t down_pin, uint8_t up_pin);
+
+  void init();
+
+private:
+  // Switch mode/trigger backlight
+  Button mode_button;
+  // Rotate through set modes
+  Button set_button;
+  // Move down
+  Button down_button;
+  // Move up
+  Button up_button;
+};

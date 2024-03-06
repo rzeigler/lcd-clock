@@ -3,7 +3,7 @@
 Display::Display() : m_lcd(0x27, 16, 2) {}
 
 void Display::init() {
-  // Assumes Wire initialized in setup since we are sharing
+  // Assumes Wire initialized externally
   m_lcd.begin(false);
   m_lcd.display();
   m_lcd.backlight();
@@ -18,5 +18,13 @@ void Display::draw(const Grid &grid) {
     for (int col = 0; col < line.len(); ++col) {
       m_lcd.print(line[col]);
     }
+  }
+}
+
+void Display::setBacklight(bool on) {
+  if (on) {
+    m_lcd.backlight();
+  } else {
+    m_lcd.backlightOff();
   }
 }

@@ -55,6 +55,8 @@ public:
 
   void draw(const Grid &grid);
 
+  void setBacklight(bool);
+
 private:
   LCD_I2C m_lcd;
 };
