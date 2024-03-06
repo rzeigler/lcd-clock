@@ -50,23 +50,64 @@ private:
   T m_high_inc;
 };
 
-class SetTimePage : public Animating {
+class Screen {
 public:
-  explicit SetTimePage(unsigned int blink_interval_ms);
+  virtual void enter(unsigned long now_ms) = 0;
+  virtual void exit() = 0;
 
-  void reset(const Time &init_time);
+  virtual void on_mode() = 0;
+  virtual void on_down() = 0;
+  virtual void on_up() = 0;
+
+  virtual void draw(Grid &m_grid) const = 0;
+};
+
+class ClockScreen : public Screen {
+public:
+  explicit ClockScreen(ClockModel &clock);
+
+  virtual void enter(unsigned long now_ms) override;
+  virtual void exit() override;
+
+  virtual void on_mode() override;
+  virtual void on_down() override;
+  virtual void on_up() override;
+
+  virtual void draw(Grid &) const override;
+
+private:
+  ClockModel &m_clock;
+};
+
+class SetTimeScreen : public Animating, public Screen {
+public:
+  enum class ClockTarget {
+    Time,
+    Alarm1,
+    Alarm2,
+  };
+
+  explicit SetTimeScreen(ClockModel &clock, ClockTarget target,
+                         const char *header);
+
+  virtual void enter(unsigned long now_ms) override;
+  virtual void exit() override;
 
   virtual void start(unsigned long now_ms) override;
   virtual void age(unsigned long now_ms) override;
 
-  void on_mode();
-  void on_down();
-  void on_up();
+  virtual void on_mode() override;
+  virtual void on_down() override;
+  virtual void on_up() override;
 
-  void draw(Grid &ui_grid) const;
+  virtual void draw(Grid &ui_grid) const override;
 
 private:
   enum class EditFocus { hour, minute, second, ampm };
+
+  ClockModel &m_clock;
+  ClockTarget m_target;
+  const char *m_header;
 
   RepeatingStepAnimation m_blink;
   EditFocus m_focus;
@@ -75,6 +116,20 @@ private:
   WrappingInt<uint8_t> m_minute;
   WrappingInt<uint8_t> m_second;
   bool m_is_pm;
+};
+
+// Placeholder while I work on the warmup alarm bits
+class Blank : public Screen {
+
+
+  virtual void enter(unsigned long) override;
+  virtual void exit() override;
+
+  virtual void on_mode() override;
+  virtual void on_down() override;
+  virtual void on_up() override;
+
+  virtual void draw(Grid &grid) const override;
 };
 
 class Controller {
@@ -87,10 +142,10 @@ public:
   void tick(unsigned long now_ms);
 
 private:
-  enum class Page { display, set_clock, set_alarm, set_warmup };
+  enum class ScreenId { clock, set_clock, set_alarm, set_warmup };
 
   void process_inputs(unsigned long now_ms);
-  void on_set();
+  void on_set(unsigned long now_ms);
 
   void process_animations(unsigned long now_ms);
   void refresh_clock(unsigned long now_ms);
@@ -108,11 +163,14 @@ private:
 
   // TODO: Construct a virtual page controller with enter/exit/handle
   // mode/up/down
-  Page m_display_state;
+  ScreenId m_screen_id;
 
-  SetTimePage m_set_clock;
-  SetTimePage m_set_alarm;
+  ClockScreen m_clock_screen;
+  SetTimeScreen m_set_clock_screen;
+  SetTimeScreen m_set_alarm_screen;
+  Blank m_set_warmup_screen;
 
+  Screen *m_current_screen;
   Animating *m_animates[3];
   // Scratch for the display so we aren't constantly recreating
   Grid m_ui_grid;
