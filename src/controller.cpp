@@ -8,8 +8,8 @@ Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
       m_redraw_interval_ms(redraw_interval_ms),
       m_backlight_duration_ms(backlight_duration_ms), m_clock(clock),
       m_display(display), m_keypad(keypad), m_last_redraw_ms(0),
-      m_last_clock_refresh_ms(0), m_last_backlight_enable_ms(0),
-      m_backlight_enabled(true) {}
+      m_last_clock_refresh_ms(0),
+      m_backlight_flag(true, backlight_duration_ms) {}
 
 void Controller::Controller::init(unsigned long now_ms) {
   Wire.begin();
@@ -19,9 +19,18 @@ void Controller::Controller::init(unsigned long now_ms) {
 }
 
 void Controller::Controller::tick(unsigned long now_ms) {
-  refresh_clock(now_ms);
+  m_backlight_flag.age(now_ms);
 
+  process_inputs(now_ms);
+  refresh_clock(now_ms);
   draw(now_ms);
+}
+
+void Controller::Controller::process_inputs(unsigned long now_ms) {
+  m_keypad.poll();
+  if (m_keypad.any_button()) {
+    m_backlight_flag.set(true, now_ms);
+  }
 }
 
 // FIXME: Handle wrapping better
@@ -44,11 +53,7 @@ void Controller::Controller::draw(unsigned long now_ms) {
     formatTimeInto(m_ui_grid, m_clock.current_time());
     m_display.draw(m_ui_grid);
 
-    if (m_backlight_enabled &&
-        now_ms > m_last_backlight_enable_ms + m_backlight_duration_ms) {
-      m_backlight_enabled = false;
-      m_display.setBacklight(false);
-    }
+    m_display.setBacklight(m_backlight_flag.get());
   }
 }
 

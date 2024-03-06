@@ -1,4 +1,6 @@
 #pragma once
+
+#include <Arduino.h>
 #include <stdint.h>
 
 inline uint32_t diff_millis(uint32_t before, uint32_t after) {
@@ -9,9 +11,8 @@ inline uint32_t diff_millis(uint32_t before, uint32_t after) {
   }
 }
 
-inline void panic(String msg) {
+inline void panic(const char *msg) {
+  Serial.println(msg);
   while (true) {
-    delay(1000);
-    Serial.println(msg);
   }
 }

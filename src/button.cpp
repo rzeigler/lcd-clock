@@ -52,14 +52,34 @@ bool Button::pressed() {
   }
 }
 
+const int MODE_BUTTON = 0;
+const int SET_BUTTON = 1;
+const int DOWN_BUTTON = 2;
+const int UP_BUTTON = 3;
+
 Keypad::Keypad(uint8_t mode_pin, uint8_t set_pin, uint8_t down_pin,
                uint8_t up_pin)
-    : mode_button(mode_pin), set_button(set_pin), down_button(down_pin),
-      up_button(up_pin) {}
+    : m_buttons({Button(mode_pin), Button(set_pin), Button(down_pin),
+                 Button(up_pin)}),
+      m_last_poll{false, false, false, false} {}
 
 void Keypad::Keypad::init() {
-  mode_button.init();
-  set_button.init();
-  down_button.init();
-  up_button.init();
+  for (int i = 0; i < 4; ++i) {
+    m_buttons[i].init();
+  }
+}
+
+void Keypad::Keypad::poll() {
+  for (int i = 0; i < 4; ++i) {
+    m_last_poll[i] = m_buttons[i].pressed();
+  }
+}
+
+bool Keypad::Keypad::any_button() const {
+  for (int i = 0; i < 4; ++i) {
+    if (m_last_poll[i]) {
+      return true;
+    }
+  }
+  return false;
 }

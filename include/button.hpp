@@ -34,13 +34,12 @@ public:
 
   void init();
 
+  void poll();
+
+  bool any_button() const;
+
 private:
   // Switch mode/trigger backlight
-  Button mode_button;
-  // Rotate through set modes
-  Button set_button;
-  // Move down
-  Button down_button;
-  // Move up
-  Button up_button;
+  Button m_buttons[4];
+  bool m_last_poll[4];
 };

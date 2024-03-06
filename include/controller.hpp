@@ -3,6 +3,7 @@
 #include <button.hpp>
 #include <clock.hpp>
 #include <display.hpp>
+#include <ui.hpp>
 
 constexpr unsigned int fps_to_interval(unsigned int fps) { return 1000 / fps; }
 
@@ -17,6 +18,7 @@ public:
   void tick(unsigned long now_ms);
 
 private:
+  void process_inputs(unsigned long now_ms);
   void refresh_clock(unsigned long now_ms);
   void draw(unsigned long now_ms);
 
@@ -31,8 +33,8 @@ private:
 
   unsigned long m_last_redraw_ms;
   unsigned long m_last_clock_refresh_ms;
-  unsigned long m_last_backlight_enable_ms;
-  boolean m_backlight_enabled;
+
+  DecayingFlag m_backlight_flag;
 
   Grid m_ui_grid;
 };

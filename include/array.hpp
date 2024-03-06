@@ -16,14 +16,14 @@ public:
 
   inline T &at(int i) {
     if (i < 0 || i >= count) {
-      panic(String("out of bounds: ") + String(i, DEC));
+      panic("array out of bounds");
     }
     return m_array[i];
   }
 
   inline const T &at(int i) const {
     if (i < 0 || i >= count) {
-      panic(String("out of bounds: ") + String(i, DEC));
+      panic("array out of bounds");
     }
     return m_array[i];
   }
