@@ -217,10 +217,9 @@ void SetTimeScreen::draw(Grid &ui_grid) const {
   cursor.home();
 
   if (m_header != NULL) {
-    int len = max(16, strlen(m_header));
+    int len = min(16, strlen(m_header));
     int padding = (16 - len) / 2;
     cursor.skip(padding);
-
     cursor.put(m_header);
   }
 
