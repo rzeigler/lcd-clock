@@ -6,7 +6,6 @@ void Display::init() {
   // Assumes Wire initialized externally
   m_lcd.begin(false);
   m_lcd.display();
-  m_lcd.backlight();
 }
 
 void Display::draw(const Grid &grid) {

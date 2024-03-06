@@ -4,12 +4,10 @@ Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
                        unsigned int redraw_interval_ms,
                        unsigned int clock_refresh_interval_ms,
                        unsigned int backlight_duration_ms)
-    : m_clock_refresh_interval_ms(clock_refresh_interval_ms),
-      m_redraw_interval_ms(redraw_interval_ms),
-      m_backlight_duration_ms(backlight_duration_ms), m_clock(clock),
-      m_display(display), m_keypad(keypad), m_last_redraw_ms(0),
-      m_last_clock_refresh_ms(0),
-      m_backlight_flag(true, backlight_duration_ms) {}
+    : m_clock(clock), m_display(display), m_keypad(keypad),
+      m_redraw_interval(redraw_interval_ms),
+      m_clock_interval(clock_refresh_interval_ms),
+      m_backlight_flag(backlight_duration_ms) {}
 
 void Controller::Controller::init(unsigned long now_ms) {
   Wire.begin();
@@ -29,15 +27,12 @@ void Controller::Controller::tick(unsigned long now_ms) {
 void Controller::Controller::process_inputs(unsigned long now_ms) {
   m_keypad.poll();
   if (m_keypad.button_pressed()) {
-    m_backlight_flag.set(true, now_ms);
+    m_backlight_flag.start(now_ms);
   }
 }
 
-// FIXME: Handle wrapping better
 void Controller::Controller::refresh_clock(unsigned long now_ms) {
-  if (now_ms < m_last_clock_refresh_ms ||
-      now_ms > m_last_clock_refresh_ms + m_clock_refresh_interval_ms) {
-    m_last_clock_refresh_ms = now_ms;
+  if (m_clock_interval.should_refresh(now_ms)) {
     m_clock.read_current();
   }
 }
@@ -46,10 +41,7 @@ static void formatTimeInto(Grid &grid, const Time &time);
 static void formatCellInto(Cursor &cursor, uint8_t num, char pad);
 
 void Controller::Controller::draw(unsigned long now_ms) {
-  if (now_ms < m_last_clock_refresh_ms ||
-      now_ms > m_last_redraw_ms + m_redraw_interval_ms) {
-    m_last_redraw_ms = now_ms;
-
+  if (m_redraw_interval.should_refresh(now_ms)) {
     formatTimeInto(m_ui_grid, m_clock.current_time());
     m_display.draw(m_ui_grid);
 
