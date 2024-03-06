@@ -6,16 +6,16 @@
 
 // Holder of a Time plus extra flags used for
 struct Time {
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-  bool is_hour12;
-  bool is_pm;
+  uint8_t hour = 0;
+  uint8_t minute = 0;
+  uint8_t second = 0;
+  bool is_hour12 = false;
+  bool is_pm = false;
 };
 
 class ClockModel {
 public:
-  ClockModel() {}
+  ClockModel();
 
   void init();
 

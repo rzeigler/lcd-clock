@@ -1,5 +1,7 @@
 #include <clock.hpp>
 
+ClockModel::ClockModel() : m_rtc(), m_time() {}
+
 // Some notes on how the clock seems to work
 // If am/pm is unreliable if we set clock mode while hour > 12
 // If setClockMode(true), then you can force a PM time by setting hour > 12

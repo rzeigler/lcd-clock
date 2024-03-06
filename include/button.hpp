@@ -7,7 +7,7 @@ class Button {
 public:
   enum State { Down = 0, Up = 1 };
 
-  Button(uint8_t pin, uint8_t debounce_ms = 5);
+  explicit Button(uint8_t pin, uint8_t debounce_ms = 5);
 
   void init();
 
@@ -36,7 +36,12 @@ public:
 
   void poll();
 
-  bool any_button() const;
+  bool button_pressed() const;
+
+  bool mode_pressed() const;
+  bool set_pressed() const;
+  bool down_pressed() const;
+  bool up_pressed() const;
 
 private:
   // Switch mode/trigger backlight

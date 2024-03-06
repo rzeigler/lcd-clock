@@ -75,7 +75,7 @@ void Keypad::Keypad::poll() {
   }
 }
 
-bool Keypad::Keypad::any_button() const {
+bool Keypad::Keypad::button_pressed() const {
   for (int i = 0; i < 4; ++i) {
     if (m_last_poll[i]) {
       return true;
@@ -83,3 +83,11 @@ bool Keypad::Keypad::any_button() const {
   }
   return false;
 }
+
+bool Keypad::Keypad::mode_pressed() const { return m_last_poll[MODE_BUTTON]; }
+
+bool Keypad::Keypad::set_pressed() const { return m_last_poll[SET_BUTTON]; }
+
+bool Keypad::Keypad::down_pressed() const { return m_last_poll[DOWN_BUTTON]; }
+
+bool Keypad::Keypad::up_pressed() const { return m_last_poll[UP_BUTTON]; }

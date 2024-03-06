@@ -2,7 +2,8 @@
 #include <util.hpp>
 
 DecayingFlag::DecayingFlag(bool start_value, unsigned long decay_time_ms)
-    : m_current_value(start_value), m_decay_time_ms(decay_time_ms) {}
+    : m_current_value(start_value), m_set_time_ms(0),
+      m_decay_time_ms(decay_time_ms) {}
 
 bool DecayingFlag::DecayingFlag::get() const { return m_current_value; }
 

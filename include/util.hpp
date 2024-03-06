@@ -11,7 +11,7 @@ inline uint32_t diff_millis(uint32_t before, uint32_t after) {
   }
 }
 
-inline void panic(const char *msg) {
+[[noreturn]] inline void panic(const char *msg) {
   Serial.println(msg);
   while (true) {
   }

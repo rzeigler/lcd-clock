@@ -28,7 +28,7 @@ void Controller::Controller::tick(unsigned long now_ms) {
 
 void Controller::Controller::process_inputs(unsigned long now_ms) {
   m_keypad.poll();
-  if (m_keypad.any_button()) {
+  if (m_keypad.button_pressed()) {
     m_backlight_flag.set(true, now_ms);
   }
 }
