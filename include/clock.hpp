@@ -23,6 +23,8 @@ public:
 
   inline const Time &current_time() const { return m_time; };
 
+  void write_time(uint8_t hour, uint8_t minute, uint8_t second, bool is_pm);
+
 private:
   DS3231 m_rtc;
   Time m_time;

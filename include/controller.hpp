@@ -79,6 +79,7 @@ private:
   ClockModel &m_clock;
 };
 
+// This needs an abstract component to read/save the time
 class SetTimeScreen : public Animating, public Screen {
 public:
   enum class ClockTarget {
@@ -106,6 +107,7 @@ private:
   enum class EditFocus { hour, minute, second, ampm };
 
   void load_time();
+  void write_time();
 
   ClockModel &m_clock;
   ClockTarget m_target;

@@ -18,3 +18,16 @@ void ClockModel::read_current() {
   m_time.minute = m_rtc.getMinute();
   m_time.second = m_rtc.getSecond();
 }
+
+void ClockModel::write_time(uint8_t hour, uint8_t minute, uint8_t second,
+                            bool is_pm) {
+  if (hour == 12 && !is_pm) {
+    hour = 0;
+  }
+  if (is_pm) {
+    hour = 12 + hour;
+  }
+  m_rtc.setHour(hour);
+  m_rtc.setMinute(minute);
+  m_rtc.setSecond(second);
+}

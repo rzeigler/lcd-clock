@@ -1,6 +1,6 @@
 #include <controller.hpp>
 
-static void formatCellInto(Cursor &cursor, uint8_t num, char pad);
+static void format_clock_field_into(Cursor &cursor, uint8_t num, char pad);
 
 Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
                        unsigned int redraw_interval_ms,
@@ -16,7 +16,7 @@ Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
       m_animates{&m_backlight_flag, &m_set_clock_screen, &m_set_alarm_screen},
       m_ui_grid(Array<char, 16>(' ')) {}
 
-void Controller::Controller::init(unsigned long now_ms) {
+void Controller::init(unsigned long now_ms) {
   Wire.begin();
   m_clock.init();
   m_display.init();
@@ -24,20 +24,20 @@ void Controller::Controller::init(unsigned long now_ms) {
   m_current_screen->enter(now_ms);
 }
 
-void Controller::Controller::tick(unsigned long now_ms) {
+void Controller::tick(unsigned long now_ms) {
   process_inputs(now_ms);
   process_animations(now_ms);
   refresh_clock(now_ms);
   draw(now_ms);
 }
 
-void Controller::Controller::process_animations(unsigned long now_ms) {
+void Controller::process_animations(unsigned long now_ms) {
   for (auto anim : m_animates) {
     anim->age(now_ms);
   }
 }
 
-void Controller::Controller::process_inputs(unsigned long now_ms) {
+void Controller::process_inputs(unsigned long now_ms) {
   m_keypad.poll();
 
   if (m_keypad.set_pressed()) {
@@ -119,11 +119,11 @@ void ClockScreen::ClockScreen::draw(Grid &grid) const {
   cursor.skip(3);
 
   uint8_t hour = time.hour == 0 ? 12 : time.hour;
-  formatCellInto(cursor, hour, ' ');
+  format_clock_field_into(cursor, hour, ' ');
   cursor.put(':');
-  formatCellInto(cursor, time.minute, '0');
+  format_clock_field_into(cursor, time.minute, '0');
   cursor.put(':');
-  formatCellInto(cursor, time.second, '0');
+  format_clock_field_into(cursor, time.second, '0');
   cursor.put(time.is_pm ? "PM" : "AM");
 }
 
@@ -135,21 +135,25 @@ SetTimeScreen::SetTimeScreen(ClockModel &clock, ClockTarget target,
 
 void SetTimeScreen::SetTimeScreen::enter(unsigned long now_ms) {
   start(now_ms);
+  switch (m_target) {
+  case ClockTarget::Time:
+    const Time &current = m_clock.current_time();
+    m_hour.set(current.hour);
+    m_minute.set(current.minute);
+    m_second.set(current.second);
+    m_is_pm = current.is_pm;
+    return;
+  }
+  Serial.println("SetTimeScreen enter fallthrough");
 }
 
-void SetTimeScreen::SetTimeScreen::exit() {
-  Serial.println("TODO: Save the time");
-}
+void SetTimeScreen::exit() { write_time(); }
 
-void SetTimeScreen::SetTimeScreen::start(unsigned long now_ms) {
-  m_blink.start(now_ms);
-}
+void SetTimeScreen::start(unsigned long now_ms) { m_blink.start(now_ms); }
 
-void SetTimeScreen::SetTimeScreen::age(unsigned long now_ms) {
-  m_blink.age(now_ms);
-}
+void SetTimeScreen::age(unsigned long now_ms) { m_blink.age(now_ms); }
 
-void SetTimeScreen::SetTimeScreen::on_mode(unsigned long now) {
+void SetTimeScreen::on_mode(unsigned long now) {
   m_blink.start(now);
   switch (m_focus) {
   case EditFocus::hour:
@@ -169,7 +173,7 @@ void SetTimeScreen::SetTimeScreen::on_mode(unsigned long now) {
 
 // TODO: Templatize so we can just direct to an editing state instead of this
 // big switch?
-void SetTimeScreen::SetTimeScreen::on_down(unsigned long now_ms) {
+void SetTimeScreen::on_down(unsigned long now_ms) {
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:
@@ -187,7 +191,7 @@ void SetTimeScreen::SetTimeScreen::on_down(unsigned long now_ms) {
   }
 }
 
-void SetTimeScreen::SetTimeScreen::on_up(unsigned long now_ms) {
+void SetTimeScreen::on_up(unsigned long now_ms) {
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:
@@ -207,7 +211,7 @@ void SetTimeScreen::SetTimeScreen::on_up(unsigned long now_ms) {
 
 const char *BLANK_SPACE = "  ";
 
-void SetTimeScreen::SetTimeScreen::draw(Grid &ui_grid) const {
+void SetTimeScreen::draw(Grid &ui_grid) const {
   Cursor cursor(ui_grid);
   cursor.blank();
   cursor.home();
@@ -226,7 +230,7 @@ void SetTimeScreen::SetTimeScreen::draw(Grid &ui_grid) const {
   // Therefore, we draw the component if focus is not on the cell or the blink
   // timer is true
   if (m_focus != EditFocus::hour || m_blink.get()) {
-    formatCellInto(cursor, m_hour.get(), ' ');
+    format_clock_field_into(cursor, m_hour.get(), ' ');
   } else {
     cursor.put(BLANK_SPACE);
   }
@@ -234,7 +238,7 @@ void SetTimeScreen::SetTimeScreen::draw(Grid &ui_grid) const {
   cursor.put(':');
 
   if (m_focus != EditFocus::minute || m_blink.get()) {
-    formatCellInto(cursor, m_minute.get(), '0');
+    format_clock_field_into(cursor, m_minute.get(), '0');
   } else {
     cursor.put(BLANK_SPACE);
   }
@@ -242,7 +246,7 @@ void SetTimeScreen::SetTimeScreen::draw(Grid &ui_grid) const {
   cursor.put(':');
 
   if (m_focus != EditFocus::second || m_blink.get()) {
-    formatCellInto(cursor, m_second.get(), '0');
+    format_clock_field_into(cursor, m_second.get(), '0');
   } else {
     cursor.put(BLANK_SPACE);
   }
@@ -254,7 +258,7 @@ void SetTimeScreen::SetTimeScreen::draw(Grid &ui_grid) const {
   }
 }
 
-void SetTimeScreen::SetTimeScreen::load_time() {
+void SetTimeScreen::load_time() {
   switch (m_target) {
   case ClockTarget::Time:
     const Time &current = m_clock.current_time();
@@ -262,22 +266,32 @@ void SetTimeScreen::SetTimeScreen::load_time() {
     m_minute.set(current.minute);
     m_second.set(current.second);
     m_is_pm = current.is_pm;
-    break;
+    return;
   }
+  Serial.println("TODO: load_time fallthrough");
 }
 
-void Blank::Blank::enter(unsigned long){};
-void Blank::Blank::exit(){};
-void Blank::Blank::on_mode(unsigned long){};
-void Blank::Blank::on_down(unsigned long){};
-void Blank::Blank::on_up(unsigned long){};
+void SetTimeScreen::write_time() {
+  switch (m_target) {
+  case ClockTarget::Time:
+    m_clock.write_time(m_hour.get(), m_minute.get(), m_second.get(), m_is_pm);
+    return;
+  }
+  Serial.println("TODO: write_time fallthrough");
+}
 
-void Blank::Blank::draw(Grid &grid) const {
+void Blank::enter(unsigned long){};
+void Blank::exit(){};
+void Blank::on_mode(unsigned long){};
+void Blank::on_down(unsigned long){};
+void Blank::on_up(unsigned long){};
+
+void Blank::draw(Grid &grid) const {
   Cursor c(grid);
   c.blank();
 }
 
-void formatCellInto(Cursor &cursor, uint8_t num, char pad) {
+void format_clock_field_into(Cursor &cursor, uint8_t num, char pad) {
   if (num < 10) {
     cursor.put(pad);
   } else {
