@@ -38,7 +38,7 @@ void OneShotStepAnimation::OneShotStepAnimation::age(unsigned long now_ms) {
 
 RepeatingStepAnimation::RepeatingStepAnimation(unsigned long interval_ms,
                                                bool initial)
-    : m_current_value(initial), m_last_toggle_ms(0),
+    : m_initial(initial), m_current_value(initial), m_last_toggle_ms(0),
       m_interval_ms(interval_ms) {}
 
 bool RepeatingStepAnimation::RepeatingStepAnimation::get() const {
@@ -48,6 +48,7 @@ bool RepeatingStepAnimation::RepeatingStepAnimation::get() const {
 // Doesn't force a starting state?
 void RepeatingStepAnimation::RepeatingStepAnimation::start(
     unsigned long now_ms) {
+  m_current_value = m_initial;
   m_last_toggle_ms = now_ms;
 }
 

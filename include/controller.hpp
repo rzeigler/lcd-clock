@@ -55,9 +55,9 @@ public:
   virtual void enter(unsigned long now_ms) = 0;
   virtual void exit() = 0;
 
-  virtual void on_mode() = 0;
-  virtual void on_down() = 0;
-  virtual void on_up() = 0;
+  virtual void on_mode(unsigned long now_ms) = 0;
+  virtual void on_down(unsigned long now_ms) = 0;
+  virtual void on_up(unsigned long now_ms) = 0;
 
   virtual void draw(Grid &m_grid) const = 0;
 };
@@ -69,9 +69,9 @@ public:
   virtual void enter(unsigned long now_ms) override;
   virtual void exit() override;
 
-  virtual void on_mode() override;
-  virtual void on_down() override;
-  virtual void on_up() override;
+  virtual void on_mode(unsigned long now_ms) override;
+  virtual void on_down(unsigned long now_ms) override;
+  virtual void on_up(unsigned long now_ms) override;
 
   virtual void draw(Grid &) const override;
 
@@ -96,14 +96,16 @@ public:
   virtual void start(unsigned long now_ms) override;
   virtual void age(unsigned long now_ms) override;
 
-  virtual void on_mode() override;
-  virtual void on_down() override;
-  virtual void on_up() override;
+  virtual void on_mode(unsigned long now_ms) override;
+  virtual void on_down(unsigned long now_ms) override;
+  virtual void on_up(unsigned long now_ms) override;
 
   virtual void draw(Grid &ui_grid) const override;
 
 private:
   enum class EditFocus { hour, minute, second, ampm };
+
+  void load_time();
 
   ClockModel &m_clock;
   ClockTarget m_target;
@@ -121,13 +123,12 @@ private:
 // Placeholder while I work on the warmup alarm bits
 class Blank : public Screen {
 
-
   virtual void enter(unsigned long) override;
   virtual void exit() override;
 
-  virtual void on_mode() override;
-  virtual void on_down() override;
-  virtual void on_up() override;
+  virtual void on_mode(unsigned long) override;
+  virtual void on_down(unsigned long) override;
+  virtual void on_up(unsigned long) override;
 
   virtual void draw(Grid &grid) const override;
 };

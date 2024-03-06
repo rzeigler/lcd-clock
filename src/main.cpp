@@ -9,7 +9,7 @@ ClockModel clock_;
 Display display;
 Keypad keypad(12, 11, 10, 9);
 
-Controller controller(clock_, display, keypad, fps_to_interval(15),
+Controller controller(clock_, display, keypad, fps_to_interval(2),
                       fps_to_interval(10));
 
 void setup() {

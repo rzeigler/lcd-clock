@@ -29,14 +29,17 @@ public:
   inline void set_row(int row) { m_row = row; }
 
   inline void put(char c) {
-    m_grid[m_row][m_col] = c;
-    m_col++;
+    if (m_row < 2 && m_col < 16) {
+      m_grid[m_row][m_col] = c;
+      m_col++;
+    } else {
+      Serial.println("Cursor.put overflow");
+    }
   }
 
   inline void put(const char *str) {
     while (*str != '\0') {
-      m_grid[m_row][m_col] = *str;
-      m_col++;
+      put(*str);
       str++;
     }
   }

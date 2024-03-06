@@ -13,9 +13,13 @@ private:
   unsigned long m_frame_interval_ms;
 };
 
+// Interface for things that animate in some way
+// All top-level animations are driven by the controller in the tick function
 class Animating {
 public:
+  // Start/reset the animation to its initial state
   virtual void start(unsigned long now_ms) = 0;
+  // Advance time in the simulation
   virtual void age(unsigned long now_ms) = 0;
 };
 
@@ -51,6 +55,7 @@ public:
   virtual void age(unsigned long now_ms) override;
 
 private:
+  bool m_initial;
   bool m_current_value;
   unsigned long m_last_toggle_ms;
   unsigned long m_interval_ms;
