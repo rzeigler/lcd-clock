@@ -13,7 +13,7 @@ Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
                        "Set Time"),
       set_alarm_screen(clock_model, SetTimeScreen::ClockTarget::Alarm1,
                        "Set Alarm"),
-      current_screen(&clock_screen), alarm(5),
+      current_screen(&clock_screen), alarm(5, 10 * 60), // On for 10 minutes
       animations{&backlight_flag, &set_clock_screen, &set_alarm_screen, &alarm},
       ui_grid(Array<char, 16>(' ')) {}
 
@@ -142,7 +142,7 @@ SetTimeScreen::SetTimeScreen(ClockModel &clock, ClockTarget target,
       minute(0, 0, 59), second(0, 0, 59) {}
 
 void SetTimeScreen::enter(unsigned long now_ms) {
-  m_has_modified = false;
+  has_edited = false;
   Time time;
   switch (m_target) {
   case ClockTarget::Time:
@@ -159,10 +159,12 @@ void SetTimeScreen::enter(unsigned long now_ms) {
 }
 
 void SetTimeScreen::exit() {
-  if (m_has_modified) {
-    Serial.println("SetTimeScreen:write");
-    write_time();
+  if (has_edited) {
+    Serial.println("SetTimeScreen:changed");
   }
+  // It seems like the alarm only takes the second edit, so for now, always
+  // write
+  write_time();
 }
 
 void SetTimeScreen::start(unsigned long now_ms) { m_blink.start(now_ms); }
@@ -190,7 +192,7 @@ void SetTimeScreen::on_mode(unsigned long now) {
 // TODO: Templatize so we can just direct to an editing state instead of this
 // big switch?
 void SetTimeScreen::on_down(unsigned long now_ms) {
-  m_has_modified = true;
+  has_edited = true;
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:
@@ -209,7 +211,7 @@ void SetTimeScreen::on_down(unsigned long now_ms) {
 }
 
 void SetTimeScreen::on_up(unsigned long now_ms) {
-  m_has_modified = true;
+  has_edited = true;
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:

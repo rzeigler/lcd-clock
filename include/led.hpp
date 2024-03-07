@@ -4,7 +4,7 @@
 
 class AlarmLed : public Animating {
 public:
-  AlarmLed(int pin);
+  AlarmLed(int pin, unsigned long duration_s);
 
   void init();
   // Friendly name for start

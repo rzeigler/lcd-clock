@@ -124,7 +124,7 @@ private:
   // If the user didn't modify the time but left the system on select for a
   // while we don't want to actually change anything, especially in the clock
   // case
-  bool m_has_modified;
+  bool has_edited;
 };
 
 // Placeholder while I work on the warmup alarm bits
