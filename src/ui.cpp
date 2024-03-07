@@ -12,9 +12,10 @@ bool RefreshInterval::RefreshInterval::should_refresh(unsigned long now_ms) {
   return false;
 }
 
-OneShotStepAnimation::OneShotStepAnimation(unsigned long decay_time_ms)
-    : m_current_value(false), m_set_time_ms(0), m_decay_time_ms(decay_time_ms) {
-}
+OneShotStepAnimation::OneShotStepAnimation(unsigned long decay_time_ms,
+                                           bool initial)
+    : m_current_value(initial), m_set_time_ms(0),
+      m_decay_time_ms(decay_time_ms) {}
 
 bool OneShotStepAnimation::OneShotStepAnimation::get() const {
   return m_current_value;

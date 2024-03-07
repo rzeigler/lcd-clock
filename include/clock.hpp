@@ -19,13 +19,20 @@ public:
 
   void init();
 
-  void read_current();
+  void readCurrent();
 
-  inline const Time &current_time() const { return m_time; };
+  inline const Time &currentTime() const { return cur_time; };
 
-  void write_time(uint8_t hour, uint8_t minute, uint8_t second, bool is_pm);
+  void setTime(uint8_t hour, uint8_t minute, uint8_t second, bool is_pm);
+
+  // Read and write alarm1, only supporting daily alarms
+  Time readAlarm1();
+
+  void setAlarm(uint8_t hour, uint8_t minute, uint8_t second, bool is_pm);
+
+  bool pollAlarm();
 
 private:
-  DS3231 m_rtc;
-  Time m_time;
+  DS3231 rtc;
+  Time cur_time;
 };

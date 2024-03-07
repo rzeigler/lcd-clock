@@ -1,6 +1,6 @@
 #include <clock.hpp>
 
-ClockModel::ClockModel() : m_rtc(), m_time() {}
+ClockModel::ClockModel() : rtc(), cur_time() {}
 
 // Some notes on how the clock seems to work
 // If am/pm is unreliable if we set clock mode while hour > 12 before enabling
@@ -10,24 +10,40 @@ ClockModel::ClockModel() : m_rtc(), m_time() {}
 
 void ClockModel::init() {
   // Make sure the clock mode is always set to 12 hour
-  m_rtc.setClockMode(true);
+  rtc.setClockMode(true);
+  rtc.turnOffAlarm(1);
 }
 
-void ClockModel::read_current() {
-  m_time.hour = m_rtc.getHour(m_time.is_hour12, m_time.is_pm);
-  m_time.minute = m_rtc.getMinute();
-  m_time.second = m_rtc.getSecond();
+void ClockModel::readCurrent() {
+  cur_time.hour = rtc.getHour(cur_time.is_hour12, cur_time.is_pm);
+  cur_time.minute = rtc.getMinute();
+  cur_time.second = rtc.getSecond();
 }
 
-void ClockModel::write_time(uint8_t hour, uint8_t minute, uint8_t second,
-                            bool is_pm) {
+void ClockModel::setTime(uint8_t hour, uint8_t minute, uint8_t second,
+                         bool is_pm) {
   if (hour == 12 && !is_pm) {
     hour = 0;
   }
   if (is_pm) {
     hour = 12 + hour;
   }
-  m_rtc.setHour(hour);
-  m_rtc.setMinute(minute);
-  m_rtc.setSecond(second);
+  rtc.setHour(hour);
+  rtc.setMinute(minute);
+  rtc.setSecond(second);
 }
+
+Time ClockModel::readAlarm1() {
+  // Don't care, just filling out the parmas
+  byte u;
+  bool b;
+
+  Time time;
+
+  return time;
+}
+
+void ClockModel::setAlarm(uint8_t hour, uint8_t minute, uint8_t second,
+                          bool is_pm) {}
+
+bool ClockModel::pollAlarm() { return false; }

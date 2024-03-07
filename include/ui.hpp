@@ -29,7 +29,8 @@ public:
  */
 class OneShotStepAnimation : public Animating {
 public:
-  explicit OneShotStepAnimation(unsigned long decay_time_ms);
+  explicit OneShotStepAnimation(unsigned long decay_time_ms,
+                                bool initial = false);
 
   bool get() const;
   virtual void start(unsigned long now_ms) override;

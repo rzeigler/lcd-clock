@@ -5,97 +5,105 @@ static void format_clock_field_into(Cursor &cursor, uint8_t num, char pad);
 Controller::Controller(ClockModel &clock, Display &display, Keypad &keypad,
                        unsigned int redraw_interval_ms,
                        unsigned int clock_refresh_interval_ms)
-    : m_clock(clock), m_display(display), m_keypad(keypad),
-      m_redraw_interval(redraw_interval_ms),
-      m_clock_interval(clock_refresh_interval_ms), m_backlight_flag(30000),
-      m_screen_id(ScreenId::clock), m_clock_screen(m_clock),
-      m_set_clock_screen(m_clock, SetTimeScreen::ClockTarget::Time, "Set Time"),
-      m_set_alarm_screen(m_clock, SetTimeScreen::ClockTarget::Alarm1,
-                         "Set Alarm"),
-      m_current_screen(&m_clock_screen),
-      m_animates{&m_backlight_flag, &m_set_clock_screen, &m_set_alarm_screen},
-      m_ui_grid(Array<char, 16>(' ')) {}
+    : clock_model(clock), display(display), keypad(keypad),
+      redraw_interval(redraw_interval_ms),
+      refresh_interval(clock_refresh_interval_ms), backlight_flag(30000),
+      screen_id(ScreenId::clock), clock_screen(clock_model),
+      set_clock_screen(clock_model, SetTimeScreen::ClockTarget::Time,
+                       "Set Time"),
+      set_alarm_screen(clock_model, SetTimeScreen::ClockTarget::Alarm1,
+                       "Set Alarm"),
+      current_screen(&clock_screen), alarm(5),
+      animations{&backlight_flag, &set_clock_screen, &set_alarm_screen, &alarm},
+      ui_grid(Array<char, 16>(' ')) {}
 
 void Controller::init(unsigned long now_ms) {
   Wire.begin();
-  m_clock.init();
-  m_display.init();
-  m_keypad.init();
-  m_current_screen->enter(now_ms);
+  alarm.init();
+  clock_model.init();
+  display.init();
+  keypad.init();
+  current_screen->enter(now_ms);
 }
 
 void Controller::tick(unsigned long now_ms) {
-  process_inputs(now_ms);
-  process_animations(now_ms);
-  refresh_clock(now_ms);
+  processAlarm(now_ms);
+  processInputs(now_ms);
+  processAnimations(now_ms);
+  refreshClock(now_ms);
   draw(now_ms);
 }
 
-void Controller::process_animations(unsigned long now_ms) {
-  for (auto anim : m_animates) {
+void Controller::processAlarm(unsigned long now_ms) {
+  if (clock_model.pollAlarm()) {
+    Serial.println("alarm");
+    alarm.trigger(now_ms);
+  }
+}
+
+void Controller::processAnimations(unsigned long now_ms) {
+  for (auto anim : animations) {
     anim->age(now_ms);
   }
 }
 
-void Controller::process_inputs(unsigned long now_ms) {
-  m_keypad.poll();
+void Controller::processInputs(unsigned long now_ms) {
+  keypad.poll();
 
-  if (m_keypad.set_pressed()) {
+  if (keypad.set_pressed()) {
     on_set(now_ms);
   }
 
-  if (m_keypad.mode_pressed()) {
-    m_current_screen->on_mode(now_ms);
+  if (keypad.mode_pressed()) {
+    current_screen->on_mode(now_ms);
   }
 
-  if (m_keypad.down_pressed()) {
-    m_current_screen->on_down(now_ms);
+  if (keypad.down_pressed()) {
+    current_screen->on_down(now_ms);
   }
 
-  if (m_keypad.up_pressed()) {
-    m_current_screen->on_up(now_ms);
+  if (keypad.up_pressed()) {
+    current_screen->on_up(now_ms);
   }
 
-  if (m_keypad.button_pressed()) {
-    m_backlight_flag.start(now_ms);
+  if (keypad.button_pressed()) {
+    backlight_flag.start(now_ms);
   }
 }
 
 void Controller::Controller::on_set(unsigned long now_ms) {
-  m_current_screen->exit();
-  switch (m_screen_id) {
+  current_screen->exit();
+  switch (screen_id) {
   case ScreenId::clock:
-    m_screen_id = ScreenId::set_clock;
-    m_current_screen = &m_set_clock_screen;
+    screen_id = ScreenId::set_clock;
+    current_screen = &set_clock_screen;
     break;
   case ScreenId::set_clock:
-    m_screen_id = ScreenId::set_alarm;
-    m_current_screen = &m_set_alarm_screen;
+    screen_id = ScreenId::set_alarm;
+    current_screen = &set_alarm_screen;
     break;
   case ScreenId::set_alarm:
-    m_screen_id = ScreenId::set_warmup;
-    m_current_screen = &m_set_warmup_screen;
-    break;
-  case ScreenId::set_warmup:
-    m_screen_id = ScreenId::clock;
-    m_current_screen = &m_clock_screen;
+    screen_id = ScreenId::clock;
+    current_screen = &clock_screen;
     break;
   }
-  m_current_screen->enter(now_ms);
+  current_screen->enter(now_ms);
 }
 
-void Controller::Controller::refresh_clock(unsigned long now_ms) {
-  if (m_clock_interval.should_refresh(now_ms)) {
-    m_clock.read_current();
+void Controller::Controller::refreshClock(unsigned long now_ms) {
+  if (refresh_interval.should_refresh(now_ms)) {
+    clock_model.readCurrent();
   }
 }
 
 void Controller::Controller::draw(unsigned long now_ms) {
-  if (m_redraw_interval.should_refresh(now_ms)) {
+  if (redraw_interval.should_refresh(now_ms)) {
+    // Need drawable abstraction?
     // We always toggle the backlight
-    m_display.setBacklight(m_backlight_flag.get());
-    m_current_screen->draw(m_ui_grid);
-    m_display.draw(m_ui_grid);
+    display.setBacklight(backlight_flag.get());
+    current_screen->draw(ui_grid);
+    display.draw(ui_grid);
+    alarm.draw();
   }
 }
 
@@ -109,7 +117,7 @@ void ClockScreen::ClockScreen::on_down(unsigned long) {}
 void ClockScreen::ClockScreen::on_up(unsigned long) {}
 
 void ClockScreen::ClockScreen::draw(Grid &grid) const {
-  const Time &time = m_clock.current_time();
+  const Time &time = m_clock.currentTime();
 
   Cursor cursor(grid);
   cursor.blank();
@@ -129,25 +137,33 @@ void ClockScreen::ClockScreen::draw(Grid &grid) const {
 
 SetTimeScreen::SetTimeScreen(ClockModel &clock, ClockTarget target,
                              const char *header)
-    : m_clock(clock), m_target(target), m_header(header), m_blink(1000, true),
-      m_focus(EditFocus::hour), m_hour(12, 1, 12), m_minute(0, 0, 59),
-      m_second(0, 0, 59) {}
+    : clock_model(clock), m_target(target), m_header(header),
+      m_blink(1000, true), m_focus(EditFocus::hour), hour(12, 1, 12),
+      minute(0, 0, 59), second(0, 0, 59) {}
 
-void SetTimeScreen::SetTimeScreen::enter(unsigned long now_ms) {
-  start(now_ms);
+void SetTimeScreen::enter(unsigned long now_ms) {
+  m_has_modified = false;
+  Time time;
   switch (m_target) {
   case ClockTarget::Time:
-    const Time &current = m_clock.current_time();
-    m_hour.set(current.hour);
-    m_minute.set(current.minute);
-    m_second.set(current.second);
-    m_is_pm = current.is_pm;
-    return;
+    time = clock_model.currentTime();
+    break;
+  case ClockTarget::Alarm1:
+    time = clock_model.readAlarm1();
+    break;
   }
-  Serial.println("SetTimeScreen enter fallthrough");
+  hour.set(time.hour);
+  minute.set(time.minute);
+  second.set(time.second);
+  is_pm = time.is_pm;
 }
 
-void SetTimeScreen::exit() { write_time(); }
+void SetTimeScreen::exit() {
+  if (m_has_modified) {
+    Serial.println("SetTimeScreen:write");
+    write_time();
+  }
+}
 
 void SetTimeScreen::start(unsigned long now_ms) { m_blink.start(now_ms); }
 
@@ -174,37 +190,39 @@ void SetTimeScreen::on_mode(unsigned long now) {
 // TODO: Templatize so we can just direct to an editing state instead of this
 // big switch?
 void SetTimeScreen::on_down(unsigned long now_ms) {
+  m_has_modified = true;
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:
-    m_hour.decr();
+    hour.decr();
     break;
   case EditFocus::minute:
-    m_minute.decr();
+    minute.decr();
     break;
   case EditFocus::second:
-    m_second.decr();
+    second.decr();
     break;
   case EditFocus::ampm:
-    m_is_pm = !m_is_pm;
+    is_pm = !is_pm;
     break;
   }
 }
 
 void SetTimeScreen::on_up(unsigned long now_ms) {
+  m_has_modified = true;
   m_blink.start(now_ms);
   switch (m_focus) {
   case EditFocus::hour:
-    m_hour.incr();
+    hour.incr();
     break;
   case EditFocus::minute:
-    m_minute.incr();
+    minute.incr();
     break;
   case EditFocus::second:
-    m_second.incr();
+    second.incr();
     break;
   case EditFocus::ampm:
-    m_is_pm = !m_is_pm;
+    is_pm = !is_pm;
     break;
   }
 }
@@ -229,7 +247,7 @@ void SetTimeScreen::draw(Grid &ui_grid) const {
   // Therefore, we draw the component if focus is not on the cell or the blink
   // timer is true
   if (m_focus != EditFocus::hour || m_blink.get()) {
-    format_clock_field_into(cursor, m_hour.get(), ' ');
+    format_clock_field_into(cursor, hour.get(), ' ');
   } else {
     cursor.put(BLANK_SPACE);
   }
@@ -237,7 +255,7 @@ void SetTimeScreen::draw(Grid &ui_grid) const {
   cursor.put(':');
 
   if (m_focus != EditFocus::minute || m_blink.get()) {
-    format_clock_field_into(cursor, m_minute.get(), '0');
+    format_clock_field_into(cursor, minute.get(), '0');
   } else {
     cursor.put(BLANK_SPACE);
   }
@@ -245,38 +263,27 @@ void SetTimeScreen::draw(Grid &ui_grid) const {
   cursor.put(':');
 
   if (m_focus != EditFocus::second || m_blink.get()) {
-    format_clock_field_into(cursor, m_second.get(), '0');
+    format_clock_field_into(cursor, second.get(), '0');
   } else {
     cursor.put(BLANK_SPACE);
   }
 
   if (m_focus != EditFocus::ampm || m_blink.get()) {
-    cursor.put(m_is_pm ? "PM" : "AM");
+    cursor.put(is_pm ? "PM" : "AM");
   } else {
     cursor.put(BLANK_SPACE);
   }
 }
 
-void SetTimeScreen::load_time() {
-  switch (m_target) {
-  case ClockTarget::Time:
-    const Time &current = m_clock.current_time();
-    m_hour.set(current.hour);
-    m_minute.set(current.minute);
-    m_second.set(current.second);
-    m_is_pm = current.is_pm;
-    return;
-  }
-  Serial.println("TODO: load_time fallthrough");
-}
-
 void SetTimeScreen::write_time() {
   switch (m_target) {
   case ClockTarget::Time:
-    m_clock.write_time(m_hour.get(), m_minute.get(), m_second.get(), m_is_pm);
-    return;
+    clock_model.setTime(hour.get(), minute.get(), second.get(), is_pm);
+    break;
+  case ClockTarget::Alarm1:
+    clock_model.setAlarm(hour.get(), minute.get(), second.get(), is_pm);
+    break;
   }
-  Serial.println("TODO: write_time fallthrough");
 }
 
 void Blank::enter(unsigned long){};

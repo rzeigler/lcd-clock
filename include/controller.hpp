@@ -3,6 +3,7 @@
 #include <button.hpp>
 #include <clock.hpp>
 #include <display.hpp>
+#include <led.hpp>
 #include <ui.hpp>
 #include <util.hpp>
 
@@ -30,14 +31,14 @@ public:
 
   void incr() {
     m_value++;
-    if (m_value > m_high_inc) {
+    if (m_value > m_high_inc || m_value < m_low_inc) { // Handle overflow
       m_value = m_low_inc;
     }
   }
 
   void decr() {
     m_value--;
-    if (m_value < m_low_inc) {
+    if (m_value < m_low_inc || m_value > m_high_inc) { // Handle underflow
       m_value = m_high_inc;
     }
   }
@@ -85,7 +86,6 @@ public:
   enum class ClockTarget {
     Time,
     Alarm1,
-    Alarm2,
   };
 
   explicit SetTimeScreen(ClockModel &clock, ClockTarget target,
@@ -106,20 +106,25 @@ public:
 private:
   enum class EditFocus { hour, minute, second, ampm };
 
-  void load_time();
   void write_time();
 
-  ClockModel &m_clock;
+  ClockModel &clock_model;
   ClockTarget m_target;
   const char *m_header;
 
   RepeatingStepAnimation m_blink;
   EditFocus m_focus;
 
-  WrappingInt<uint8_t> m_hour;
-  WrappingInt<uint8_t> m_minute;
-  WrappingInt<uint8_t> m_second;
-  bool m_is_pm;
+  WrappingInt<uint8_t> hour;
+  WrappingInt<uint8_t> minute;
+  WrappingInt<uint8_t> second;
+  bool is_pm;
+
+  // Track whether the user modified the time
+  // If the user didn't modify the time but left the system on select for a
+  // while we don't want to actually change anything, especially in the clock
+  // case
+  bool m_has_modified;
 };
 
 // Placeholder while I work on the warmup alarm bits
@@ -145,36 +150,39 @@ public:
   void tick(unsigned long now_ms);
 
 private:
-  enum class ScreenId { clock, set_clock, set_alarm, set_warmup };
+  enum class ScreenId { clock, set_clock, set_alarm };
 
-  void process_inputs(unsigned long now_ms);
-  void on_set(unsigned long now_ms);
-
-  void process_animations(unsigned long now_ms);
-  void refresh_clock(unsigned long now_ms);
+  void processAlarm(unsigned long now_ms);
+  void processInputs(unsigned long now_ms);
+  void processAnimations(unsigned long now_ms);
+  void refreshClock(unsigned long now_ms);
   void draw(unsigned long now_ms);
 
+  void on_set(unsigned long now_ms);
+
   // Split these out for testing
-  ClockModel &m_clock;
-  Display &m_display;
-  Keypad &m_keypad;
+  ClockModel &clock_model;
+  Display &display;
+  Keypad &keypad;
 
-  RefreshInterval m_redraw_interval;
-  RefreshInterval m_clock_interval;
+  RefreshInterval redraw_interval;
+  RefreshInterval refresh_interval;
 
-  OneShotStepAnimation m_backlight_flag;
+  OneShotStepAnimation backlight_flag;
 
   // TODO: Construct a virtual page controller with enter/exit/handle
   // mode/up/down
-  ScreenId m_screen_id;
+  ScreenId screen_id;
 
-  ClockScreen m_clock_screen;
-  SetTimeScreen m_set_clock_screen;
-  SetTimeScreen m_set_alarm_screen;
-  Blank m_set_warmup_screen;
+  ClockScreen clock_screen;
+  SetTimeScreen set_clock_screen;
+  SetTimeScreen set_alarm_screen;
 
-  Screen *m_current_screen;
-  Animating *m_animates[3];
+  Screen *current_screen;
+
+  AlarmLed alarm;
+
+  Animating *animations[4];
   // Scratch for the display so we aren't constantly recreating
-  Grid m_ui_grid;
+  Grid ui_grid;
 };
